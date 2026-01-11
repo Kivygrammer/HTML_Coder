@@ -1,22 +1,122 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTML редактор</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #111; color: #eee; }
+    header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a; }
+    header h1 { margin: 0; font-size: 18px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+    .toolbar input[type="text"] { padding: 8px; border: 1px solid #333; background: #0f0f0f; color: #eee; border-radius: 6px; min-width: 180px; }
+    .btn { padding: 8px 12px; border: 1px solid #333; background: #202020; color: #eee; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #2a2a2a; }
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: calc(100vh - 98px); }
+    .pane { display: flex; flex-direction: column; }
+    .label { padding: 8px 12px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a; font-size: 13px; }
+    textarea { flex: 1; width: 100%; resize: none; padding: 12px; border: none; outline: none; background: #0b0b0b; color: #e6e6e6; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    iframe { flex: 1; width: 100%; border: none; background: #0b0b0b; }
+    footer { padding: 8px 16px; background: #1a1a1a; border-top: 1px solid #2a2a2a; font-size: 12px; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; height: auto; } iframe, textarea { min-height: 45vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>HTML редактор</h1>
+    <div class="toolbar">
+      <button class="btn" id="boilerplate">Вставить шаблон</button>
+      <button class="btn" id="preview">Предпросмотр</button>
+      <button class="btn" id="download">Скачать</button>
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" id="autoupdate" checked /> Авто‑предпросмотр
+      </label>
+      <input type="text" id="filename" value="index.html" aria-label="Имя файла" />
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="pane">
+      <div class="label">Код HTML</div>
+      <textarea id="code" spellcheck="false" placeholder="Введите ваш HTML здесь..."></textarea>
+    </div>
+    <div class="pane">
+      <div class="label">Предпросмотр</div>
+      <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+  </div>
+
+  <footer>
+    Подсказка: используйте кнопку «Вставить шаблон», чтобы начать быстрее. Код не сохраняется автоматически.
+  </footer>
+
+  <script>
+    const ta = document.getElementById('code');
+    const frame = document.getElementById('previewFrame');
+    const previewBtn = document.getElementById('preview');
+    const downloadBtn = document.getElementById('download');
+    const boilerBtn = document.getElementById('boilerplate');
+    const auto = document.getElementById('autoupdate');
+    const filenameInput = document.getElementById('filename');
+
+    const defaultBoilerplate = `<!DOCTYPE html>
+<html lang="ru">
+<head>
   <meta charset="UTF-8">
-  <title>Простая страница</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мой документ</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
-    h1 { color: #2a6; }
-    a { color: #06c; }
+    .card { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 0.5rem 0.75rem; }
   </style>
 </head>
 <body>
   <h1>Привет, мир!</h1>
-  <p>Это простая HTML-страница с базовой разметкой.</p>
-  <ul>
-    <li><strong>Заголовок:</strong> h1</li>
-    <li><strong>Абзац:</strong> p</li>
-    <li><strong>Ссылка:</strong> <a href="https://example.com">Перейти</a></li>
-  </ul>
+  <div class="card">
+    Это стартовый шаблон. Измените HTML, CSS и JS по своему желанию.
+  </div>
+  <button onclick="alert('Работает!')">Проверка JS</button>
+</body>
+</html>`;
+
+    function updatePreview() {
+      frame.srcdoc = ta.value || '<!DOCTYPE html><html><body><p>Пустой документ</p></body></html>';
+    }
+
+    function downloadHTML() {
+      let name = (filenameInput.value || 'index.html').trim();
+      if (!name.toLowerCase().endsWith('.html')) name += '.html';
+      const blob = new Blob([ta.value], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    boilerBtn.addEventListener('click', () => {
+      ta.value = defaultBoilerplate;
+      if (auto.checked) updatePreview();
+    });
+
+    previewBtn.addEventListener('click', updatePreview);
+    downloadBtn.addEventListener('click', downloadHTML);
+
+    let debounce;
+    ta.addEventListener('input', () => {
+      if (!auto.checked) return;
+      clearTimeout(debounce);
+      debounce = setTimeout(updatePreview, 200);
+    });
+
+    // Инициализация
+    ta.value = defaultBoilerplate;
+    updatePreview();
+  </script>
 </body>
 </html>
